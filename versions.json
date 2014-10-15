@@ -38,7 +38,7 @@
     ],
     [
       "cwohlman:emails",
-      "0.1.0"
+      "0.2.0"
     ],
     [
       "cwohlman:templating-server",
@@ -54,10 +54,6 @@
     ],
     [
       "ejson",
-      "1.0.4"
-    ],
-    [
-      "email",
       "1.0.4"
     ],
     [
