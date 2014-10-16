@@ -1,14 +1,14 @@
 Package.describe({
   name: 'cwohlman:mailgun-emails',
   summary: 'Send and recieve emails via mailgun',
-  version: '1.0.0',
+  version: '1.1.0',
   git: 'git@github.com:cwohlman/meteor-mailgun-emails.git'
 });
 
 Package.onUse(function(api) {
   api.versionsFrom('0.9.3');
   
-  api.use('cwohlman:emails@0.2.0');
+  api.use('cwohlman:emails@0.3.0');
   api.imply('cwohlman:emails');
 
   api.use('http');
