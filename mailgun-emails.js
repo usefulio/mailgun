@@ -234,7 +234,7 @@ Mailgun = {
 
 		// The emails package will save any keys on the updates object
 		// to the database.
-		updates.outgoingId = result.id;
+		if (result.data.id) updates.outgoingId = result.data.id;
 	}
 };
 
