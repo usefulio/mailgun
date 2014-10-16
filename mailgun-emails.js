@@ -21,7 +21,7 @@ Mailgun = {
 			'store(notify="' + config.routePath + '")';
 
 		config.priority = _.isNumber(config.priority) ? config.priority : 5;
-		
+
 		// The filter for matching emails to catch and forward
 		config.expression = "match_recipient(\".*@" + config.domain.replace(/\./g, '\\.') + "\")";
 
@@ -124,6 +124,10 @@ Mailgun = {
 		}
 	}
 	, processQueue: function () {
+		// collects the last 100 emails
+		// XXX extend this to handle paging for more than 100 emails
+		// and add an 'end' parameter which limits logs to the last 3 days
+		// mailgun discards stored emails after that time period.
 		var response = HTTP.get("https://api.mailgun.net/v2/" + Mailgun.config.domain + "/events?event=stored", {
 			auth: Mailgun.config.auth
 		});
