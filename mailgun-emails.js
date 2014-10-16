@@ -116,6 +116,9 @@ Mailgun = {
 
 			var message = result.data;
 
+			console.log(message);
+
+
 			var email = {
 				subject: message.subject
 				, from: message.sender
@@ -127,6 +130,7 @@ Mailgun = {
 				// block (if found).'
 				, message: message["stripped-text"]
 				, incomingId: incomingId
+				, mailgunId: message["Message-Id"]
 			};
 
 			if (id) {
@@ -211,6 +215,45 @@ Mailgun = {
 		}
 
 	}
+	// this function is the default reject function and should be replaced
+	// with a customized function which uses an admin user as the fromId
+	// and goes through the Emails.send method.
+	, reject: function (email) {
+		// if you can't figure out what code is rejecting an email, just
+		// uncomment this code below:
+		// var error = new Error('rejected email:' + email.subject);
+		// Meteor.setTimeout(function () {
+		// 	throw error;
+		// });
+
+		// it might be a good idea to prevent an email from being rejected more
+		// than once:
+			// if (email._id) {
+			// 	var dbVersion = Emails._collection.findOne(email._id);
+			// 	if (dbVersion.bounced) return;
+			// 	Emails._collection.update(email._id, {
+			// 		$set: {
+			// 			bounced: true
+			// 		}
+			// 	});
+			// }
+		Mailgun.send({
+			from: 'noreply@' + Mailgun.config.domain
+			, to: email.from
+			, subject: 'Message delivery failed: ' + email.subject
+			, text: [
+				'Your email could not be delivered, '
+				, 'check that you are a user on our site, '
+				, 'that the address you are sending to is valid, '
+				, 'and that your message included both a subject and body.'
+				, ' \n\nFor further information please contact support on our website,'
+				, ' you can refer to the following details: '
+				, '\nemailId: ', email._id
+				, '\nmessageId: ', email.mailgunId
+				].join('')
+
+		});
+	}
 	, send: function (email, updates) {
 		var emailToSend = _.pick(email
 			, 'from'
@@ -234,7 +277,7 @@ Mailgun = {
 
 		// The emails package will save any keys on the updates object
 		// to the database.
-		if (result.data.id) updates.outgoingId = result.data.id;
+		if (result.data.id && updates) updates.outgoingId = result.data.id;
 	}
 };
 
