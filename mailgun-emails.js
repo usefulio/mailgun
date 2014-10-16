@@ -92,12 +92,24 @@ Mailgun = {
 				return;
 			}
 
-			// create a draft version of this email to prevent other servers
-			// from processing it in the mean time.
+			// By inserting the email as a draft we lock this incomingId for
+			// processing, any other node which tries to process the same email
+			// will fall afoul of the unique index on incomingId (or will stop
+			// after the check above)
+
+		
+			// If this throws a mongo index collision error we can assume
+			// another node is processing this email, and we can safely stop
+			// processing this email.
 			id = Emails.config.queue && Emails.send({
 				draft: true
 				, incomingId: incomingId
 			});
+
+			// If this throws a 404 error we can assume this message has already
+			// been processed. This shouldn't happen if Emails.config.persist is
+			// true, but would happen if we reset the db. If this happends we
+			// can safely stop processing this email.
 			var result = HTTP.get(callbackUrl, {
 				auth: Mailgun.config.auth
 			});
@@ -133,11 +145,35 @@ Mailgun = {
 			});
 
 		} catch (e) {
-			// XXX parse error and either:
-			//  - retry (network error)
-			//  - reject (email processing error error)
-			//  - ignore (mailgun 404 message not found)
-			console.log(e);
+
+			// We remove the draft email from the collection - if the emails
+			// package rejected the email it won't be marked as a draft anymore
+			// and can safely be left in the collection
+			if (id && Emails._collection && Emails._collection.findOne({
+				_id: id
+				// only delete drafts, if the email was invalid, it will have
+				// been 'rejected' by the email system and should be kept for
+				// logging purposes and to prevent it being retried.
+				, draft: {
+					$exists: true
+				}
+			})) {
+				Emails._collection.remove(id);
+			}
+
+			// XXX the following error types should not be retried (we should
+			// leave the email record in the collection)
+			//  - mailgun 404 message not found (indicates message has been
+			//	sent, we still need to throw an error, sent messages aren't
+			//	supposed to be caught this way)
+			//	- Mongo index collision (indicates message is being processed on
+			//	another node, we shouldn't throw an error if this happens)
+
+
+			// Better stack trace handling:
+			Meteor.setTimeout(function () {
+				throw e;
+			});
 		}
 	}
 	, processQueue: function (queryPeriod) {
