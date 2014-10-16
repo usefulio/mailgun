@@ -116,9 +116,6 @@ Mailgun = {
 
 			var message = result.data;
 
-			console.log(message);
-
-
 			var email = {
 				subject: message.subject
 				, from: message.sender
