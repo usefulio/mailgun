@@ -82,14 +82,22 @@ Mailgun = {
 	}
 	, processEmail: function (callbackUrl) {
 		console.log('processing', callbackUrl);
-		try {
-			var incomingId = callbackUrl.match(/messages\/(.*)$/)[1];
+		var incomingId = callbackUrl.match(/messages\/(.*)$/)[1]
+			, id;
 
+		try {
 			if (Emails._collection && Emails._collection.findOne({
 				incomingId: incomingId
 			})) {
 				return;
 			}
+
+			// create a draft version of this email to prevent other servers
+			// from processing it in the mean time.
+			id = Emails.config.queue && Emails.send({
+				draft: true
+				, incomingId: incomingId
+			});
 			var result = HTTP.get(callbackUrl, {
 				auth: Mailgun.config.auth
 			});
@@ -109,6 +117,11 @@ Mailgun = {
 				, incomingId: incomingId
 			};
 
+			if (id) {
+				email._id = id;
+				email.draft = false;
+			}
+
 			Emails.receive(email);
 
 			// deleting the message ensures it won't be sent twice, even if we
@@ -120,22 +133,47 @@ Mailgun = {
 			});
 
 		} catch (e) {
+			// XXX parse error and either:
+			//  - retry (network error)
+			//  - reject (email processing error error)
+			//  - ignore (mailgun 404 message not found)
 			console.log(e);
 		}
 	}
-	, processQueue: function () {
-		// collects the last 100 emails
-		// XXX extend this to handle paging for more than 100 emails
-		// and add an 'end' parameter which limits logs to the last 3 days
-		// mailgun discards stored emails after that time period.
-		var response = HTTP.get("https://api.mailgun.net/v2/" + Mailgun.config.domain + "/events?event=stored", {
-			auth: Mailgun.config.auth
-		});
-		var queue = response.data.items;
+	, processQueue: function (queryPeriod) {
+		// XXX query the db to limit how many hours back we search for messages
+		// right now we look back 3 days which is the length of time mailgun
+		// will store a message, so we're pretty much gaurenteed not to miss
+		// a message, but we'll over process every time the server starts up
+		// (hopefully not very often.)
+		var pageUrl = "https://api.mailgun.net/v2/" + Mailgun.config.domain + '/events';
+		queryPeriod = queryPeriod || 1000 * 60 * 60 * 72;
+		while (true) {
+			var response =  HTTP.get(pageUrl, {
+				auth: Mailgun.config.auth
+				, params: {
+					event: 'stored'
+					, begin: (new Date(new Date().valueOf() - queryPeriod)).toGMTString()
+					, end: new Date().toGMTString()
+					, limit: 100
+				}
+			});
 
-		_.each(queue, function (message) {
-			Mailgun.processEmail(message.storage.url);
-		});
+			var queue = response.data.items;
+
+			_.each(queue, function (message) {
+				Mailgun.processEmail(message.storage.url);
+			});
+
+			if (
+				// already processed the next page
+				response.data.paging.next == pageUrl ||
+				// last page / only one page
+				queue.length < 100
+				) break;
+			else pageUrl = response.data.paging.next;
+		}
+
 	}
 	, send: function (email, updates) {
 		var emailToSend = _.pick(email
