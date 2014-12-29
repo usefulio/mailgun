@@ -24,6 +24,5 @@ Package.onTest(function(api) {
   api.use('tinytest');
   api.use('cwohlman:mailgun-emails');
   api.use('iron:router');
-  api.addFiles('mailgun-emails-tests-key.js');
   api.addFiles('mailgun-emails-tests.js');
 });
