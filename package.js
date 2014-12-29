@@ -1,19 +1,19 @@
 Package.describe({
-  name: 'cwohlman:mailgun-emails',
-  summary: 'Send and recieve emails via mailgun',
-  version: "1.1.1",
-  git: 'git@github.com:cwohlman/meteor-mailgun-emails.git'
+  name: 'useful:email-mailgun',
+  summary: 'Send and receive emails via mailgun',
+  version: "0.0.1",
+  git: 'git@github.com:usefulio/emails-mailgun.git'
 });
 
 Package.onUse(function(api) {
-  api.versionsFrom('0.9.3');
+  api.versionsFrom('1.0');
   
   api.use('cwohlman:emails@0.3.0');
   api.imply('cwohlman:emails');
 
   api.use('http');
   api.use('sha');
-  api.use('iron:router@0.9.3');
+  api.use('iron:router');
 
   api.addFiles('mailgun-emails.js');
 
