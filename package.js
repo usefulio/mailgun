@@ -8,12 +8,10 @@ Package.describe({
 Package.onUse(function(api) {
   api.versionsFrom('0.9.3');
   
-  api.use('cwohlman:emails@0.3.0');
+  api.use('cwohlman:emails@0.4.0');
   api.imply('cwohlman:emails');
 
   api.use('http');
-  api.use('sha');
-  api.use('iron:router@0.9.3');
 
   api.addFiles('mailgun-emails.js');
 
@@ -22,8 +20,9 @@ Package.onUse(function(api) {
 
 Package.onTest(function(api) {
   api.use('tinytest');
+  api.use('http');
   api.use('cwohlman:mailgun-emails');
-  api.use('iron:router');
+
   api.addFiles('mailgun-emails-tests-key.js');
-  api.addFiles('mailgun-emails-tests.js');
+  api.addFiles('mailgun-emails-tests.js', ["server"]);
 });

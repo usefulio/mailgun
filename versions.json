@@ -38,7 +38,7 @@
     ],
     [
       "cwohlman:emails",
-      "0.3.0"
+      "0.3.3"
     ],
     [
       "cwohlman:templating-server",
@@ -94,7 +94,7 @@
     ],
     [
       "iron:router",
-      "0.9.4"
+      "0.9.3"
     ],
     [
       "jquery",
