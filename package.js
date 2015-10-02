@@ -1,7 +1,7 @@
 Package.describe({
   name: 'useful:email-mailgun',
   summary: 'Send and receive emails via mailgun',
-  version: "0.0.2",
+  version: "0.0.3",
   git: 'git@github.com:usefulio/mailgun.git'
 });
 
@@ -13,7 +13,7 @@ Package.onUse(function(api) {
 
   api.use('http');
   api.use('sha');
-  api.use('iron:router@1.0.0');
+  api.use('iron:router');
 
   api.addFiles('mailgun-emails.js');
 
